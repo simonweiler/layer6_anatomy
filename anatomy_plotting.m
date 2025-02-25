@@ -6,6 +6,9 @@
 %2) plotSpread: https://uk.mathworks.com/matlabcentral/fileexchange/37105-plot-spread-points-beeswarm-plot
 %3) ploterr: https://uk.mathworks.com/matlabcentral/fileexchange/22216-ploterr
 %4) 200 colormap: https://uk.mathworks.com/matlabcentral/fileexchange/120088-200-colormap 
+%5) offsetAxes: https://uk.mathworks.com/matlabcentral/fileexchange/52351-offsetaxes-ax
+%6) linspecer: https://uk.mathworks.com/matlabcentral/fileexchange/42673-beautiful-and-distinguishable-line-colors-colormap
+%7) cmap: https://uk.mathworks.com/matlabcentral/fileexchange/42450-custom-colormap 
 %Matlab structure: Data_SW_20-02-Apr-2024.mat
 
 
@@ -3076,8 +3079,8 @@ function fILN_visualize(x_cord,y_cord,fILNi,fILNc,color_scheme,title_pan)
 
 
 %Colormap definition 
-tt=[];
-[tt]=buildcmap('xbwrz');
+%tt=[];
+%[tt]=buildcmap('xbwrz');
 minbar=0;
 maxbar=1;
 
@@ -3112,7 +3115,7 @@ else contains(title_pan,'MOp')==1
     hold on;sc1=scatter(x_cord(25),y_cord(25),150,'w','filled');sc1.MarkerEdgeColor=color_scheme; sc1.Marker='o'; sc1.LineWidth=1;
 end
 title('ipsi','FontWeight','normal',"FontSize",11);
-caxis([minbar maxbar]) 
+%caxis([minbar maxbar]) 
 %xlim([100 1500]) 
 %ylim([100 1300]) 
 nexttile
@@ -3167,7 +3170,78 @@ rm2_error=nanstd(temp_metric2)/sqrt(size(temp_metric2,1));
 data_ilnc=temp_rm2;
 data_ilni=temp_rm1;
 end
-%% 8 harmonic_mean_pvalue
+%% 8 anatomy_correlation
+
+%calculates correlation values and average/SEM of data points to be correlted
+function [value1_all value2_all value1 value2 xerr yerr r_a p_a r_avg p_avg value3_all xerr_c] = anatomy_correlation(rm1, rm2, idx)
+%input to function: 
+%rm1=
+%rm2=
+%idx=indexes to be correlated 
+%output
+%r_a/p_a= individual animal/modules based correlation/pvalues
+%avg p_avg= correlation on average data points
+%dependencies: anatomy_indexcalc.m
+
+i_metric=[];c_metric=[];
+%calculate indexes across areas
+for i=1:size(rm1,2)
+temp_l=[];temp_l2=[];
+temp_l=squeeze(rm1(:,i,:));
+temp_l2=squeeze(rm2(:,i,:));
+[i_metric(:,i,:)] = anatomy_indexcalc(temp_l);
+[c_metric(:,i,:)] = anatomy_indexcalc(temp_l2);
+end 
+temp_metric1=i_metric(:,:,idx);temp_metric2=c_metric(:,:,idx);
+
+%Calculate correaltions across Ns
+r_a=[];p_a=[];
+for i=1:size(temp_metric1,1)
+r=[];p=[];
+[r p] = corr(temp_metric1(i,:)',(temp_metric2(i,:)-temp_metric1(i,:))','Type','Spearman','Rows','complete');
+r_a(i)=r(1);
+p_a(i)=p(1);
+end
+%average values 
+
+value1=nanmean(temp_metric1);
+value2=nanmean(temp_metric2)-nanmean(temp_metric1);
+value3_all=temp_metric2;
+value1_all=temp_metric1;
+value2_all=temp_metric2-temp_metric1;
+%xSEM
+xerr=[];
+xerr=nanstd(temp_metric1);
+xerr_c=nanstd(temp_metric2);
+temp_div=[];
+for m=1:45
+    temp_z=[];
+    temp_z=temp_metric1(:,m);
+temp_div(m)=sqrt(length(temp_z(~isnan(temp_z))));
+end
+xerr=xerr./temp_div;
+
+for m=1:45
+    temp_z=[];
+    temp_z=temp_metric2(:,m);
+temp_div(m)=sqrt(length(temp_z(~isnan(temp_z))));
+end
+xerr_c=xerr_c./temp_div;
+%ySEM
+yerr=[];
+yerr=nanstd(temp_metric2-temp_metric1);
+temp_div=[];
+for m=1:45
+    temp_z=[];
+    temp_z=temp_metric2(:,m)-temp_metric1(:,m);
+temp_div(m)=sqrt(length(temp_z(~isnan(temp_z))));
+end
+yerr=yerr./temp_div;
+
+%average correlation 
+[r_avg p_avg] = corr(value1',value2','Type','Spearman','Rows','complete');
+end
+%% 9 harmonic_mean_pvalue
 function combined_p = harmonic_mean_pvalue(p_values)
     % Input:
     %   p_values - Array of p-values (e.g., [0.05, 0.01, 0.2])
@@ -3191,7 +3265,7 @@ function combined_p = harmonic_mean_pvalue(p_values)
     % Display results
     fprintf('Harmonic Mean Combined P-Value: %f\n', combined_p);
 end
-%% 9 anatomy_indexhemi
+%% 10 anatomy_indexhemi
 function [dchange] = anatomy_indexhemi(layers_i,layers_c)
 for i=1:size(layers_i,2)
 %1) iln=(L5+L6a/b) / (L2/3+L5+L6a/b);
