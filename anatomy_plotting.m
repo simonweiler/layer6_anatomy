@@ -3099,7 +3099,7 @@ hold on;sc1=scatter(x_cord(find(isnan(fILNi))),y_cord(find(isnan(fILNi))),150,[0
 %hold on;sc1=scatter(x_cord,y_cord,150,'w','filled');sc1.MarkerEdgeColor='k';
 set(gca,'Ydir','reverse');axis off;
 
-colormap(tt);
+%colormap(tt);
 for i=1:45
  if i<10
 text(x_cord(i)-18,y_cord(i)-5,num2str(i),"FontSize",9,'Color',[1 1 1]);%8
